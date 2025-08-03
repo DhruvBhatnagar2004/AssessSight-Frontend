@@ -9,10 +9,10 @@ import { getScanHistory, getScanById } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
 export default function History() {
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedScan, setSelectedScan] = useState<any>(null);
+  const [error, setError] = useState(null);
+  const [selectedScan, setSelectedScan] = useState(null);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -39,7 +39,7 @@ export default function History() {
     fetchHistory();
   }, [isAuthenticated, router]);
 
-  const handleScanSelect = async (id: string) => {
+  const handleScanSelect = async (id) => {
     try {
       setLoading(true);
       const scan = await getScanById(id);
@@ -109,7 +109,6 @@ export default function History() {
             </div>
 
             {/* Display scan details similar to the main dashboard */}
-            {/* You can customize what details to show in the history view */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
                 <h3 className="font-medium text-lg mb-2">Accessibility Score</h3>

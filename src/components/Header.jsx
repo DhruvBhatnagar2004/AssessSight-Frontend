@@ -4,13 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import LoginModal from "./LoginModal";
 import RegisterModal from "./RegisterModal";
 
-interface HeaderProps {
-  onScan: (result: any) => void;
-  onScanStart: () => void;
-  onScanError: (error: string) => void;
-}
-
-export default function Header({ onScan, onScanStart, onScanError }: HeaderProps) {
+export default function Header({ onScan, onScanStart, onScanError }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -18,7 +12,7 @@ export default function Header({ onScan, onScanStart, onScanError }: HeaderProps
   
   const { user, logout, isAuthenticated } = useAuth();
 
-  const handleScan = async (e: React.FormEvent) => {
+  const handleScan = async (e) => {
     e.preventDefault();
     if (!url) return;
     
@@ -32,13 +26,11 @@ export default function Header({ onScan, onScanStart, onScanError }: HeaderProps
     onScanStart();
     
     try {
-      // Direct API call to your backend
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const headers: HeadersInit = {
+      const headers = {
         'Content-Type': 'application/json',
       };
       
-      // Add auth token if user is logged in
       const token = localStorage.getItem('accessToken');
       if (token) {
         headers.Authorization = `Bearer ${token}`;

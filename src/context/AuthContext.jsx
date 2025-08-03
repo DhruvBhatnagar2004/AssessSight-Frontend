@@ -1,25 +1,11 @@
 "use client";
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+const AuthContext = createContext(undefined);
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  isAuthenticated: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
+            setIsAuthenticated(true);
           } else {
             localStorage.removeItem('accessToken');
           }
@@ -52,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email, password) => {
     setLoading(true);
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
@@ -70,34 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       localStorage.setItem('accessToken', data.token);
       setUser(data.user);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (name: string, email: string, password: string) => {
-    setLoading(true);
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const response = await fetch(`${backendUrl}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('accessToken', data.token);
-      setUser(data.user);
-    } catch (error) {
-      console.error('Registration error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -107,18 +69,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     localStorage.removeItem('accessToken');
     setUser(null);
+    setIsAuthenticated(false);
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    isAuthenticated: !!user
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      loading,
+      login,
+      logout,
+      register: () => {} // Add your register function
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => {

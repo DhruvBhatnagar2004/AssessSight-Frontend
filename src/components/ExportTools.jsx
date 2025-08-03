@@ -1,10 +1,10 @@
 import React from "react";
 
-export default function ExportTools({ data }: { data: any }) {
+export default function ExportTools({ data }) {
   function exportCSV() {
     const csv = [
       ["Type", "Selector", "Message"],
-      ...data.issues.map((i: any) => [i.type, i.selector, i.message]),
+      ...data.issues.map((i) => [i.type, i.selector, i.message]),
     ].map(row => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

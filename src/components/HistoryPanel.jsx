@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 export default function HistoryPanel() {
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState([]);
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/history`)
       .then(res => res.json())

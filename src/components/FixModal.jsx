@@ -1,14 +1,10 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 
-interface FixModalProps {
-  issue: any;
-  onClose: () => void;
-}
-
-export default function FixModal({ issue, onClose }: FixModalProps) {
-  const [fixSuggestion, setFixSuggestion] = useState<string | null>(null);
+export default function FixModal({ issue, onClose }) {
+  const [fixSuggestion, setFixSuggestion] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     async function fetchFix() {
@@ -53,7 +49,7 @@ export default function FixModal({ issue, onClose }: FixModalProps) {
   }, [issue]);
   
   // Generate generic fix when API fails or context is missing
-  function getGeneralFix(issue: any) {
+  function getGeneralFix(issue) {
     const issueType = issue.type || '';
     const message = issue.message || issue.description || '';
     

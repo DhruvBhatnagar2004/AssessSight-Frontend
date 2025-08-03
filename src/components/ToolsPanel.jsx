@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function ToolsPanel({ onCrawlDepthChange }: { onCrawlDepthChange?: (depth: number) => void }) {
+export default function ToolsPanel({ onCrawlDepthChange }) {
   const [depth, setDepth] = useState(1);
   return (
     <div className="flex gap-4 items-center mt-4">

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+export async function POST(request) {
   try {
     const body = await request.json();
     
     // Proxy the request to your backend
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-    const response = await fetch(`${backendUrl}/api/scan`, {
+    const response = await fetch(`${backendUrl}/api/fix`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,7 +19,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error }, { status: response.status });
     }
     
-    // Get scan result and return it
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {

@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import Pagination from './Pagination';
 
-interface IssueTableProps {
-  issues: any[];
-  onSelectIssue?: (issue: any) => void;
-}
-
-export default function IssuesTable({ issues, onSelectIssue }: IssueTableProps) {
+export default function IssuesTable({ issues, onSelectIssue }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
@@ -16,7 +11,7 @@ export default function IssuesTable({ issues, onSelectIssue }: IssueTableProps) 
   const currentIssues = issues.slice(indexOfFirstIssue, indexOfLastIssue);
   
   // Get severity class
-  const getSeverityClass = (type: string) => {
+  const getSeverityClass = (type) => {
     switch(type) {
       case "error":
         return "bg-red-900/30 text-red-400 border border-red-700";

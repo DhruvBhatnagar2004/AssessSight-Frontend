@@ -1,4 +1,4 @@
-export async function getAIFix(html: string, issue: any) {
+export async function getAIFix(html, issue) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/fix`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

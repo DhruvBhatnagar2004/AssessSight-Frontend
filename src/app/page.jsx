@@ -7,16 +7,16 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import Pagination from "../components/Pagination";
 import FixModal from "../components/FixModal";
 import { getScanHistory } from "../services/api";
-import { useAuth } from "../context/AuthContext"; // Import Auth context
+import { useAuth } from "../context/AuthContext";
 
 export default function Home() {
-  const [scanResult, setScanResult] = useState<any>(null);
+  const [scanResult, setScanResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [scanHistory, setScanHistory] = useState<any[]>([]);
+  const [error, setError] = useState(null);
+  const [scanHistory, setScanHistory] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIssue, setSelectedIssue] = useState<any>(null);
-  const { isAuthenticated, user } = useAuth(); // Use auth context
+  const [selectedIssue, setSelectedIssue] = useState(null);
+  const { isAuthenticated, user } = useAuth();
   const itemsPerPage = 10;
 
   // Load history only if authenticated
@@ -37,69 +37,54 @@ export default function Home() {
     };
     
     fetchHistory();
-  }, [isAuthenticated]); // Re-fetch when auth state changes
+  }, [isAuthenticated]);
 
   // Calculate derived metrics from scan result
   const severityData = scanResult?.issues ? [
-    { name: "Errors", value: scanResult.issues.filter((i: any) => i.type === "error").length },
-    { name: "Warnings", value: scanResult.issues.filter((i: any) => i.type === "warning").length },
-    { name: "Notices", value: scanResult.issues.filter((i: any) => i.type === "notice").length }
+    { name: "Errors", value: scanResult.issues.filter((i) => i.type === "error").length },
+    { name: "Warnings", value: scanResult.issues.filter((i) => i.type === "warning").length },
+    { name: "Notices", value: scanResult.issues.filter((i) => i.type === "notice").length }
   ] : [];
 
   // Improved function to calculate more accurate category scores
-  function calculateCategoryScore(issues: any[], elements: string[]) {
-    if (!issues || !Array.isArray(issues)) return 100;
+  function calculateCategoryScore(issues, elements) {
+    if (!issues || issues.length === 0) return 100;
     
-    // Filter issues by elements with improved detection
-    const categoryIssues = issues.filter(i => {
-      const selector = (i.selector || i.element || '').toLowerCase();
-      const message = (i.message || i.description || '').toLowerCase();
-      
-      return elements.some(el => {
-        const elLower = el.toLowerCase();
-        return selector.includes(elLower) || message.includes(elLower);
-      });
-    });
+    const errorWeight = 3;
+    const warningWeight = 2;
+    const noticeWeight = 1;
     
-    if (categoryIssues.length === 0) return 100;
+    const totalWeight = issues.reduce((sum, issue) => {
+      switch (issue.type) {
+        case 'error': return sum + errorWeight;
+        case 'warning': return sum + warningWeight;
+        case 'notice': return sum + noticeWeight;
+        default: return sum + 1;
+      }
+    }, 0);
     
-    // Weight different issue types
-    const errorCount = categoryIssues.filter(i => i.type === "error").length;
-    const warningCount = categoryIssues.filter(i => i.type === "warning").length;
-    const noticeCount = categoryIssues.filter(i => i.type === "notice").length;
+    const maxPossibleWeight = elements.length * errorWeight;
+    const score = Math.max(0, 100 - (totalWeight / maxPossibleWeight * 100));
     
-    // Calculate score with better weights
-    const baseScore = 100;
-    // Limit how many issues we count to avoid extreme negative scores
-    const maxIssues = 10;
-    const errorDeduction = Math.min(errorCount, maxIssues) * 8;
-    const warningDeduction = Math.min(warningCount, maxIssues) * 4;
-    const noticeDeduction = Math.min(noticeCount, maxIssues) * 1;
-    
-    const score = Math.max(0, baseScore - errorDeduction - warningDeduction - noticeDeduction);
     return Math.round(score);
   }
 
   // Calculate overall score with improved algorithm
-  function calculateOverallScore(issues: any[]) {
-    if (!issues || !Array.isArray(issues)) return 100;
+  function calculateOverallScore(issues) {
+    if (!issues || issues.length === 0) return 100;
     
-    // Count issues by type
-    const errorCount = issues.filter(i => i.type === "error").length;
-    const warningCount = issues.filter(i => i.type === "warning").length;
-    const noticeCount = issues.filter(i => i.type === "notice").length;
+    const errors = issues.filter(i => i.type === 'error').length;
+    const warnings = issues.filter(i => i.type === 'warning').length;
+    const notices = issues.filter(i => i.type === 'notice').length;
     
-    // Scale the impact based on total issues to avoid extreme negative scores
-    const totalIssues = errorCount + warningCount + noticeCount;
-    const scaleFactor = totalIssues > 50 ? 50 / totalIssues : 1;
+    // Weighted scoring system
+    const errorPenalty = errors * 15;
+    const warningPenalty = warnings * 8;
+    const noticePenalty = notices * 3;
     
-    // Base score of 100, with scaled deductions
-    const baseScore = 100;
-    const errorDeduction = errorCount * 3 * scaleFactor;
-    const warningDeduction = warningCount * 1 * scaleFactor;
-    const noticeDeduction = noticeCount * 0.5 * scaleFactor;
+    const totalPenalty = errorPenalty + warningPenalty + noticePenalty;
+    const score = Math.max(0, 100 - totalPenalty);
     
-    const score = Math.max(0, baseScore - errorDeduction - warningDeduction - noticeDeduction);
     return Math.round(score);
   }
   
@@ -109,14 +94,14 @@ export default function Home() {
   const currentIssues = scanResult?.issues 
     ? scanResult.issues.slice(indexOfFirstIssue, indexOfLastIssue) 
     : [];
-    
+
   // Handle scanning process
   const handleScanStart = () => {
     setLoading(true);
     setError(null);
   };
   
-  const handleScan = (result: any) => {
+  const handleScan = (result) => {
     setScanResult(result);
     setLoading(false);
     
@@ -126,7 +111,7 @@ export default function Home() {
     }
   };
   
-  const handleScanError = (errorMsg: string) => {
+  const handleScanError = (errorMsg) => {
     setError(errorMsg);
     setLoading(false);
   };
@@ -153,17 +138,7 @@ export default function Home() {
               Enter any URL to analyze accessibility issues on any public website.
             </p>
           </div>
-          <div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600 hover:border-teal-500/30 transition-all hover:shadow-lg">
-            <div className="rounded-full bg-teal-500/20 w-12 h-12 flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2 text-slate-100">Get Detailed Reports</h3>
-            <p className="text-slate-400">
-              View comprehensive reports with visualizations and specific issues.
-            </p>
-          </div>
+          
           <div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600 hover:border-teal-500/30 transition-all hover:shadow-lg">
             <div className="rounded-full bg-teal-500/20 w-12 h-12 flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -175,14 +150,26 @@ export default function Home() {
               Get actionable recommendations to improve accessibility.
             </p>
           </div>
+          
+          <div className="bg-slate-700/50 p-6 rounded-lg border border-slate-600 hover:border-teal-500/30 transition-all hover:shadow-lg">
+            <div className="rounded-full bg-teal-500/20 w-12 h-12 flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-slate-100">Track Progress</h3>
+            <p className="text-slate-400">
+              Monitor improvements over time with detailed analytics.
+            </p>
+          </div>
         </div>
       </div>
-
-      <div className="bg-slate-800 p-8 rounded-xl border border-slate-700">
-        <h2 className="text-2xl font-bold mb-6 text-slate-100">Why Accessibility Matters</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="flex flex-col space-y-4">
+      
+      {/* Why Accessibility Matters section */}
+      <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+        <h3 className="text-xl font-bold mb-4 text-slate-100">Why Accessibility Matters</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="flex items-start">
               <div className="flex-shrink-0 h-6 w-6 text-teal-400 mt-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -205,13 +192,12 @@ export default function Home() {
               <div className="ml-3">
                 <h3 className="text-lg font-medium text-slate-200">Legal Compliance</h3>
                 <p className="mt-1 text-sm text-slate-400">
-                  Many countries require websites to be accessible. Avoid potential legal issues and fines.
+                  Many countries have laws requiring digital accessibility. Avoid legal issues by being proactive.
                 </p>
               </div>
             </div>
           </div>
-
-          <div className="flex flex-col space-y-4">
+          <div className="space-y-4">
             <div className="flex items-start">
               <div className="flex-shrink-0 h-6 w-6 text-teal-400 mt-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,7 +205,7 @@ export default function Home() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-lg font-medium text-slate-200">Better User Experience</h3>
+                <h3 className="text-lg font-medium text-slate-200">Better UX for All</h3>
                 <p className="mt-1 text-sm text-slate-400">
                   Accessible websites are generally easier to use for everyone, not just those with disabilities.
                 </p>
@@ -240,12 +226,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        <div className="mt-8 text-center">
-          <p className="text-slate-300 mb-4">
-            Create an account to track your website's accessibility progress over time.
-          </p>
-        </div>
       </div>
     </div>
   );
@@ -254,15 +234,12 @@ export default function Home() {
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <Header 
         onScan={handleScan} 
-        onScanStart={handleScanStart}
+        onScanStart={handleScanStart} 
         onScanError={handleScanError}
       />
       <Navigation />
+      
       <main className="container mx-auto px-4 py-6">
-        <h2 className="text-2xl font-bold mb-6 text-slate-100">
-          {isAuthenticated ? `Welcome, ${user?.name || 'User'}` : 'Dashboard'}
-        </h2>
-        
         {loading ? (
           <LoadingSpinner />
         ) : error ? (
@@ -331,24 +308,7 @@ export default function Home() {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Only show history chart if authenticated and has history */}
-              {isAuthenticated && (
-                <div className="bg-slate-800/80 backdrop-blur rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-700/50">
-                  <h3 className="text-lg font-medium mb-4 text-slate-100">
-                    <span className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-teal-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M3 3a1 1 0 000 2h10a1 1 100-2H3zm0 4a1 1 0 000 2h6a1 1 100-2H3zm0 4a1 1 100 2h10a1 1 100-2H3z" clipRule="evenodd" />
-                      </svg>
-                      Historical Performance
-                    </span>
-                  </h3>
-                  <div className="h-64 md:h-72">
-                    <HistoricalScores data={scanHistory} />
-                  </div>
-                </div>
-              )}
-              
-              <div className={`bg-slate-800/80 backdrop-blur rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-700/50 ${!isAuthenticated ? 'lg:col-span-2' : ''}`}>
+              <div className="bg-slate-800/80 backdrop-blur rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-700/50">
                 <h3 className="text-lg font-medium mb-4 text-slate-100">Accessibility Score</h3>
                 <div className="h-64 md:h-72 flex items-center justify-center">
                   <ScoreLine score={calculateOverallScore(scanResult.issues)} />
@@ -373,7 +333,7 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
-                      {currentIssues.map((issue: any, index: number) => (
+                      {currentIssues.map((issue, index) => (
                         <tr key={index} className="hover:bg-slate-700/50">
                           <td className="px-4 py-3 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -392,11 +352,11 @@ export default function Home() {
                           <td className="px-4 py-3 text-sm text-slate-300">
                             {issue.message || issue.description}
                           </td>
-                          <td className="px-4 py-3 text-sm font-mono text-slate-400">
-                            {issue.context ? (
-                              <span title={issue.context} className="truncate block max-w-xs">
-                                {issue.context.length > 30 ? `${issue.context.slice(0, 30)}...` : issue.context}
-                              </span>
+                          <td className="px-4 py-3 text-sm text-slate-400 max-w-xs">
+                            {issue.context || issue.html ? (
+                              <code className="bg-slate-700 px-2 py-1 rounded text-xs">
+                                {(issue.context || issue.html).substring(0, 50)}...
+                              </code>
                             ) : 'N/A'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">
@@ -435,17 +395,16 @@ export default function Home() {
             )}
           </>
         ) : (
-          // Show rich welcome content instead of history when there's no scan result
           renderWelcomeView()
         )}
+        
+        {selectedIssue && (
+          <FixModal 
+            issue={selectedIssue} 
+            onClose={() => setSelectedIssue(null)} 
+          />
+        )}
       </main>
-      
-      {selectedIssue && (
-        <FixModal
-          issue={selectedIssue}
-          onClose={() => setSelectedIssue(null)}
-        />
-      )}
     </div>
   );
 }

@@ -2,12 +2,6 @@
  * API service for accessibility scanning
  */
 
-interface ScanOptions {
-  url: string;
-  includeWarnings?: boolean;
-  includeNotices?: boolean;
-}
-
 // Get the backend URL from environment or use a fallback with dynamic port detection
 const getBackendUrl = () => {
   if (typeof window !== 'undefined') {
@@ -24,12 +18,12 @@ const getBackendUrl = () => {
   return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 };
 
-export async function scanWebsite(options: ScanOptions) {
+export async function scanWebsite(options) {
   try {
     const backendUrl = getBackendUrl();
     
     // Add auth token if available
-    const headers: HeadersInit = {
+    const headers = {
       'Content-Type': 'application/json',
     };
     
@@ -55,12 +49,12 @@ export async function scanWebsite(options: ScanOptions) {
     throw error;
   }
 }
-export async function getScanResults(id: string) {
+export async function getScanResults(id) {
   try {
     const backendUrl = getBackendUrl();
     
     // Include auth token
-    const headers: HeadersInit = {};
+    const headers = {};
     const token = localStorage.getItem('accessToken');
     if (token) {
       headers.Authorization = `Bearer ${token}`;
@@ -89,7 +83,7 @@ export async function getScanHistory() {
     
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
     
-    const headers: HeadersInit = {
+    const headers = {
       'Authorization': `Bearer ${token}`
     };
     
@@ -108,7 +102,7 @@ export async function getScanHistory() {
   }
 }
 
-export async function getScanById(id: string) {
+export async function getScanById(id) {
   try {
     const backendUrl = getBackendUrl();
     const response = await fetch(`${backendUrl}/api/scan/${id}`);
@@ -124,7 +118,7 @@ export async function getScanById(id: string) {
   }
 }
 
-export async function getFixSuggestion(html: string, issue: any) {
+export async function getFixSuggestion(html, issue) {
   try {
     const backendUrl = getBackendUrl();
     const response = await fetch(`${backendUrl}/api/fix`, {

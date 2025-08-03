@@ -1,18 +1,11 @@
 import React from "react";
 
-interface PaginationProps {
-  totalItems: number;
-  itemsPerPage: number;
-  currentPage: number;
-  onPageChange: (page: number) => void;
-}
-
 export default function Pagination({
   totalItems,
   itemsPerPage,
   currentPage,
   onPageChange,
-}: PaginationProps) {
+}) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   
   if (totalPages <= 1) return null;
